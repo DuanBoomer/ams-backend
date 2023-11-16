@@ -21,7 +21,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     # allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
@@ -63,26 +63,29 @@ async def get_students(email):
 
 @app.post("/alumni/{email}/schedule_event", response_model=Event)
 async def post_event(email, event: Event):
-    event = await schedule_event(email, event.dict())
-    if (event):
-        return event
-    return HTTPException(404, "Schedule Failed")
+    # event = await schedule_event(email, event.dict())
+    # if (event):
+    #     return event
+    # return HTTPException(404, "Schedule Failed")
+    return f"post event {event} to {email}"
 
 
 @app.post("/alumni/{email}", response_model=Alumni)
 async def update_alumni(email, data: Alumni):
-    data = await update_alumni_details(email, data.dict())
-    if (data):
-        return data
-    return HTTPException(404, "Updation failed for alumni {email}")
+    # data = await update_alumni_details(email, data.dict())
+    # if (data):
+    #     return data
+    # return HTTPException(404, "Updation failed for alumni {email}")
+    return f"update alumni {email}"
 
 
 @app.post("student/{email}", response_model=Student)
 async def update_student(email, data: Student):
-    data = await update_student_details(email, data.dict())
-    if (data):
-        return data
-    return HTTPException(404, "Updation failed for studet {email}")
+    # data = await update_student_details(email, data.dict())
+    # if (data):
+    #     return data
+    # return HTTPException(404, "Updation failed for studet {email}")
+    return f"update student {email}"
 
 
 # @app.get("/")
