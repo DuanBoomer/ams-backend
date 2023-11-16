@@ -1,0 +1,90 @@
+import motor.motor_asyncio
+from model import Student
+# from model import Todo
+
+uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
+client = motor.motor_asyncio.AsyncIOMotorClient(uri)
+database = client.alumni_mapping_system
+alumni_collection = database.alumni
+student_collection = database.student
+
+
+async def fetch_alumni(email):
+    data = await alumni_collection.find_one({"email": email})
+    return data
+
+
+async def fetch_student(email):
+    data = await student_collection.find_one({"email": email})
+    return data
+
+
+async def fetch_events_history(email):
+    data = await alumni_collection.find_one({"email": email})
+    data = data["event_history"]
+    return data
+
+
+async def fetch_all_students(email):
+    data = []
+    cursor = student_collection.find({"alumni": email})
+    async for document in cursor:
+        data.append(Student(**document))
+    return data
+
+
+async def schedule_event(email, event):
+    alumni_collection.update_one(
+        {"email": email}, {"$push": {"event_history": event}})
+    return event
+
+
+async def update_alumni_details(email, alumni):
+    try:
+        data = await alumni_collection.find_one({"email": email})
+        for key in data.keys():
+            if key in alumni.keys() and data[key] != alumni[key]:
+                alumni_collection.update_one(
+                    {"email": email}, {"$set": {f"{key}": alumni[key]}})
+        return alumni
+    except AttributeError:
+        return {"error": "invalid email id"}
+
+
+async def update_student_details(email, student):
+    try:
+        data = await student_collection.find_one({"email": email})
+        for key in data.keys():
+            if key in student.keys() and data[key] != student[key]:
+                student_collection.update_one(
+                    {"email": email}, {"$set": {f"{key}": student[key]}})
+        return student
+    except AttributeError:
+        return {"error": "invalid email id"}
+
+
+# async def fetch_one_todo(title):
+#     document = await collection.find_one({"title": title})
+#     return document
+
+# async def fetch_all_todos():
+#     todos = []
+#     cursor = collection.find({})
+#     async for document in cursor:
+#         todos.append(Todo(**document))
+#     return todos
+
+# async def create_todo(todo):
+#     document = todo
+#     result = await collection.insert_one(document)
+#     return document
+
+
+# async def update_todo(title, desc):
+#     await collection.update_one({"title": title}, {"$set": {"description": desc}})
+#     document = await collection.find_one({"title": title})
+#     return document
+
+# async def remove_todo(title):
+#     await collection.delete_one({"title": title})
+#     return True
