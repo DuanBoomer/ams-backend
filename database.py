@@ -3,7 +3,8 @@ from model import Student
 import os
 # from model import Todo
 
-uri = os.getenv("MONGODB")
+# uri = os.getenv("MONGODB")
+uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
 client = motor.motor_asyncio.AsyncIOMotorClient(uri)
 database = client.alumni_mapping_system
 alumni_collection = database.alumni
@@ -19,13 +20,21 @@ async def authenticate_student(email, password):
     data = await student_collection.find_one({"email": email, "password": password})
     return data
 
+
 async def fetch_student(email):
     data = await student_collection.find_one({"email": email})
     return data
 
+
 async def fetch_alumni(email):
-    data = await student_collection.find_one({"email": email})
+    data = await alumni_collection.find_one({"email": email})
     return data
+
+
+async def fetch_ongoing_event(email):
+    data = await alumni_collection.find_one({"email": email}, {"event_history": {"$elemMatch": {"type": "pending"}}})
+    print(data)
+    return data['event_history']
 
 
 async def fetch_events_history(email):

@@ -8,6 +8,7 @@ from database import (
     fetch_student,
     fetch_alumni,
     fetch_events_history,
+    fetch_ongoing_event,
     fetch_all_students,
     # schedule_event,
     # update_alumni_details,
@@ -45,12 +46,14 @@ async def auth_student(email, password):
         return data
     return HTTPException(404, f"Authentication failed for {email}")
 
+
 @app.get("/alumni/{email}", response_model=Alumni)
 async def get_alumni_details(email):
     data = await fetch_alumni(email)
     if (data):
         return data
     return HTTPException(404, f"No alumni with email: {email} exists")
+
 
 @app.get("/student/{email}", response_model=Student)
 async def get_student_details(email):
@@ -60,20 +63,28 @@ async def get_student_details(email):
     return HTTPException(404, f"No student with email: {email} exists")
 
 
-@app.get("/alumni/{email}/events")
+@app.get("/events/alumni/{email}")
 async def get_events_history(email):
     data = await fetch_events_history(email)
     if (data):
-        return {"history": data}
+        return {"data": data}
     return HTTPException(404, f"No events for alumni with email: {email}")
 
 
-@app.get("/alumni/{email}/students")
+@app.get("/students/alumni/{email}")
 async def get_students_under_alumni(email):
     data = await fetch_all_students(email)
     if (data):
         return data
     return HTTPException(404, f"No students under alumni with email: {email}")
+
+
+@app.get("/ongoing_event/alumni/{email}")
+async def get_ongoing_event(email):
+    data = await fetch_ongoing_event(email)
+    if (data):
+        return data
+    return HTTPException(404, f"No ongoing events for alumni with email: {email}")
 
 
 @app.post("/alumni/{email}/schedule_event", response_model=Event)
