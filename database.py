@@ -23,6 +23,10 @@ async def fetch_student(email):
     data = await student_collection.find_one({"email": email})
     return data
 
+async def fetch_alumni(email):
+    data = await student_collection.find_one({"email": email})
+    return data
+
 
 async def fetch_events_history(email):
     data = await alumni_collection.find_one({"email": email})

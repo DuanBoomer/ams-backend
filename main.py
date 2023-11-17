@@ -6,6 +6,7 @@ from database import (
     authenticate_alumni,
     authenticate_student,
     fetch_student,
+    fetch_alumni,
     fetch_events_history,
     fetch_all_students,
     # schedule_event,
@@ -43,6 +44,13 @@ async def auth_student(email, password):
     if (data):
         return data
     return HTTPException(404, f"Authentication failed for {email}")
+
+@app.get("/alumni/{email}", response_model=Alumni)
+async def get_alumni_details(email):
+    data = await fetch_alumni(email)
+    if (data):
+        return data
+    return HTTPException(404, f"No alumni with email: {email} exists")
 
 @app.get("/student/{email}", response_model=Student)
 async def get_student_details(email):
