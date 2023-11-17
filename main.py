@@ -9,6 +9,7 @@ from database import (
     fetch_alumni,
     fetch_events_history,
     fetch_ongoing_event,
+    fetch_event_details,
     fetch_all_students,
     # schedule_event,
     # update_alumni_details,
@@ -86,32 +87,39 @@ async def get_ongoing_event(email):
         return data
     return HTTPException(404, f"No ongoing events for alumni with email: {email}")
 
-
-@app.post("/alumni/{email}/schedule_event", response_model=Event)
-async def post_event(email, event: Event):
-    # event = await schedule_event(email, event.dict())
-    # if (event):
-    #     return event
-    # return HTTPException(404, "Schedule Failed")
-    return f"post event {event} to {email}"
+@app.get("/eventdetails/alumni/{email}/{title}")
+async def get_event_details(email, title):
+    data = await fetch_event_details(email, title)
+    if (data):
+        return data
+    return HTTPException(404, f"No event under alumni email: {email} with title: {title}")
 
 
-@app.post("/alumni/{email}", response_model=Alumni)
-async def update_alumni(email, data: Alumni):
-    # data = await update_alumni_details(email, data.dict())
-    # if (data):
-    #     return data
-    # return HTTPException(404, "Updation failed for alumni {email}")
-    return {"response": f"update alumni {email}"}
+# @app.post("/alumni/{email}/schedule_event", response_model=Event)
+# async def post_event(email, event: Event):
+#     # event = await schedule_event(email, event.dict())
+#     # if (event):
+#     #     return event
+#     # return HTTPException(404, "Schedule Failed")
+#     return f"post event {event} to {email}"
 
 
-@app.post("student/{email}", response_model=Student)
-async def update_student(email, data: Student):
-    # data = await update_student_details(email, data.dict())
-    # if (data):
-    #     return data
-    # return HTTPException(404, "Updation failed for studet {email}")
-    return {"response": f"update student {email}"}
+# @app.post("/alumni/{email}", response_model=Alumni)
+# async def update_alumni(email, data: Alumni):
+#     # data = await update_alumni_details(email, data.dict())
+#     # if (data):
+#     #     return data
+#     # return HTTPException(404, "Updation failed for alumni {email}")
+#     return {"response": f"update alumni {email}"}
+
+
+# @app.post("student/{email}", response_model=Student)
+# async def update_student(email, data: Student):
+#     # data = await update_student_details(email, data.dict())
+#     # if (data):
+#     #     return data
+#     # return HTTPException(404, "Updation failed for studet {email}")
+#     return {"response": f"update student {email}"}
 
 
 # @app.get("/")

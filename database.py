@@ -40,6 +40,10 @@ async def fetch_events_history(email):
     data = await alumni_collection.find_one({"email": email})
     return data["event_history"]
 
+async def fetch_event_details(email, title):
+    data = await alumni_collection.find_one({"email": email}, {"event_history": {"$elemMatch": {"title": title}}})
+    return data['event_history'][0]
+
 
 async def fetch_all_students(email):
     data = []
