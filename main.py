@@ -3,13 +3,14 @@ from fastapi import FastAPI, HTTPException
 from model import (Alumni, Event, Student)
 
 from database import (
-    fetch_alumni,
+    authenticate_alumni,
+    authenticate_student,
     fetch_student,
     fetch_events_history,
     fetch_all_students,
-    schedule_event,
-    update_alumni_details,
-    update_student_details
+    # schedule_event,
+    # update_alumni_details,
+    # update_student_details
 )
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,43 +23,49 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    # allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-@app.get("/alumni/{email}", response_model=Alumni)
-async def get_alumni(email):
-    data = await fetch_alumni(email)
+@app.get("/alumni/{email}/{password}", response_model=Alumni)
+async def auth_alumni(email, password):
+    data = await authenticate_alumni(email, password)
     if (data):
         return data
-    return HTTPException(404, f"There is no alumni with the email {email}")
+    return HTTPException(404, f"Authentication failed for {email}")
 
+
+@app.get("/student/{email}/{password}", response_model=Student)
+async def auth_student(email, password):
+    data = await authenticate_student(email, password)
+    if (data):
+        return data
+    return HTTPException(404, f"Authentication failed for {email}")
 
 @app.get("/student/{email}", response_model=Student)
-async def get_student(email):
+async def get_student_details(email):
     data = await fetch_student(email)
     if (data):
         return data
-    return HTTPException(404, f"There is no student with the email {email}")
+    return HTTPException(404, f"No student with email: {email} exists")
 
 
 @app.get("/alumni/{email}/events")
-async def get_events(email):
+async def get_events_history(email):
     data = await fetch_events_history(email)
     if (data):
         return {"history": data}
-    return HTTPException(404, "No events")
+    return HTTPException(404, f"No events for alumni with email: {email}")
 
 
 @app.get("/alumni/{email}/students")
-async def get_students(email):
+async def get_students_under_alumni(email):
     data = await fetch_all_students(email)
     if (data):
         return data
-    return HTTPException(404, "Couldn't find")
+    return HTTPException(404, f"No students under alumni with email: {email}")
 
 
 @app.post("/alumni/{email}/schedule_event", response_model=Event)
@@ -76,7 +83,7 @@ async def update_alumni(email, data: Alumni):
     # if (data):
     #     return data
     # return HTTPException(404, "Updation failed for alumni {email}")
-    return f"update alumni {email}"
+    return {"response": f"update alumni {email}"}
 
 
 @app.post("student/{email}", response_model=Student)
@@ -85,7 +92,7 @@ async def update_student(email, data: Student):
     # if (data):
     #     return data
     # return HTTPException(404, "Updation failed for studet {email}")
-    return f"update student {email}"
+    return {"response": f"update student {email}"}
 
 
 # @app.get("/")

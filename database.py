@@ -1,18 +1,23 @@
 import motor.motor_asyncio
 from model import Student
+import os
 # from model import Todo
 
-uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
+uri = os.getenv("MONGODB")
 client = motor.motor_asyncio.AsyncIOMotorClient(uri)
 database = client.alumni_mapping_system
 alumni_collection = database.alumni
 student_collection = database.student
 
 
-async def fetch_alumni(email):
-    data = await alumni_collection.find_one({"email": email})
+async def authenticate_alumni(email, password):
+    data = await alumni_collection.find_one({"email": email, "password": password})
     return data
 
+
+async def authenticate_student(email, password):
+    data = await student_collection.find_one({"email": email, "password": password})
+    return data
 
 async def fetch_student(email):
     data = await student_collection.find_one({"email": email})
@@ -33,34 +38,34 @@ async def fetch_all_students(email):
     return data
 
 
-async def schedule_event(email, event):
-    alumni_collection.update_one(
-        {"email": email}, {"$push": {"event_history": event}})
-    return event
+# async def schedule_event(email, event):
+#     alumni_collection.update_one(
+#         {"email": email}, {"$push": {"event_history": event}})
+#     return event
 
 
-async def update_alumni_details(email, alumni):
-    try:
-        data = await alumni_collection.find_one({"email": email})
-        for key in data.keys():
-            if key in alumni.keys() and data[key] != alumni[key]:
-                alumni_collection.update_one(
-                    {"email": email}, {"$set": {f"{key}": alumni[key]}})
-        return alumni
-    except AttributeError:
-        return {"error": "invalid email id"}
+# async def update_alumni_details(email, alumni):
+#     try:
+#         data = await alumni_collection.find_one({"email": email})
+#         for key in data.keys():
+#             if key in alumni.keys() and data[key] != alumni[key]:
+#                 alumni_collection.update_one(
+#                     {"email": email}, {"$set": {f"{key}": alumni[key]}})
+#         return alumni
+#     except AttributeError:
+#         return {"error": "invalid email id"}
 
 
-async def update_student_details(email, student):
-    try:
-        data = await student_collection.find_one({"email": email})
-        for key in data.keys():
-            if key in student.keys() and data[key] != student[key]:
-                student_collection.update_one(
-                    {"email": email}, {"$set": {f"{key}": student[key]}})
-        return student
-    except AttributeError:
-        return {"error": "invalid email id"}
+# async def update_student_details(email, student):
+#     try:
+#         data = await student_collection.find_one({"email": email})
+#         for key in data.keys():
+#             if key in student.keys() and data[key] != student[key]:
+#                 student_collection.update_one(
+#                     {"email": email}, {"$set": {f"{key}": student[key]}})
+#         return student
+#     except AttributeError:
+#         return {"error": "invalid email id"}
 
 
 # async def fetch_one_todo(title):
