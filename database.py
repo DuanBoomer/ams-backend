@@ -33,14 +33,12 @@ async def fetch_alumni(email):
 
 async def fetch_ongoing_event(email):
     data = await alumni_collection.find_one({"email": email}, {"event_history": {"$elemMatch": {"type": "pending"}}})
-    print(data)
-    return data['event_history']
+    return data['event_history'][0]
 
 
 async def fetch_events_history(email):
     data = await alumni_collection.find_one({"email": email})
-    data = data["event_history"]
-    return data
+    return data["event_history"]
 
 
 async def fetch_all_students(email):
