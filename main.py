@@ -68,7 +68,7 @@ async def get_student_details(email):
 async def get_events_history(email):
     data = await fetch_events_history(email)
     if (data):
-        return {"data": data}
+        return data
     return HTTPException(404, f"No events for alumni with email: {email}")
 
 
