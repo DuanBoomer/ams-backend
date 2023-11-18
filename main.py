@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 
 from model import (Alumni, Event, Student)
-import socketio
+# import socketio
 from database import (
     authenticate_alumni,
     authenticate_student,
@@ -23,9 +23,9 @@ origins = [
     "http://localhost:3000", "https://alumni-mapping-system.vercel.app"
 ]
 
-sio=socketio.AsyncServer(cors_allowed_origins=origins,async_mode='asgi')
-socket_app = socketio.ASGIApp(sio)
-app.mount("/", socket_app)
+# sio=socketio.AsyncServer(cors_allowed_origins=origins,async_mode='asgi')
+# socket_app = socketio.ASGIApp(sio)
+# app.mount("/", socket_app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -99,13 +99,13 @@ async def get_event_details(email, title):
     return HTTPException(404, f"No event under alumni email: {email} with title: {title}")
 
 # Chat
-@app.get("/socket.io")
-def read_root():
-    return {"Chat": "Opened"}
+# @app.get("/socket.io")
+# def read_root():
+#     return {"Chat": "Opened"}
 
-@sio.on('msg')
-async def client_side_receive_msg(sid, msg):
-    await sio.emit("msg", str(msg))
+# @sio.on('msg')
+# async def client_side_receive_msg(sid, msg):
+#     await sio.emit("msg", str(msg))
 
 
 # @app.post("/alumni/{email}/schedule_event", response_model=Event)
