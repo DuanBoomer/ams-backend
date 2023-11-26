@@ -12,7 +12,7 @@ from database import (
     fetch_event_details,
     fetch_all_students,
     update_alumni_details,
-    # schedule_event,
+    schedule_event,
     # update_alumni_details,
     # update_student_details
 )
@@ -35,6 +35,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def home_route():
+    return {"application": "alumni-mapping-system"}
 
 
 @app.get("/alumni/{email}/{password}", response_model=Alumni)
@@ -92,6 +96,7 @@ async def get_ongoing_event(email):
         return data
     return HTTPException(404, f"No ongoing events for alumni with email: {email}")
 
+
 @app.get("/eventdetails/alumni/{email}/{title}")
 async def get_event_details(email, title):
     data = await fetch_event_details(email, title)
@@ -99,7 +104,8 @@ async def get_event_details(email, title):
         return data
     return HTTPException(404, f"No event under alumni email: {email} with title: {title}")
 
-@app.post("/update/alumni/{email}", response_model = Alumni)
+
+@app.post("/update/alumni/{email}", response_model=Alumni)
 async def post_alumni_details(email, details: Alumni):
     data = await update_alumni_details(email, details.dict())
     if "error" in data.keys():
@@ -108,23 +114,16 @@ async def post_alumni_details(email, details: Alumni):
         return data
     return HTTPException(404, f"No alumni with email: {email} found")
 
-# Chat
-# @app.get("/socket.io")
-# def read_root():
-#     return {"Chat": "Opened"}
 
-# @sio.on('msg')
-# async def client_side_receive_msg(sid, msg):
-#     await sio.emit("msg", str(msg))
-
-
-# @app.post("/alumni/{email}/schedule_event", response_model=Event)
-# async def post_event(email, event: Event):
-#     # event = await schedule_event(email, event.dict())
-#     # if (event):
-#     #     return event
-#     # return HTTPException(404, "Schedule Failed")
-#     return f"post event {event} to {email}"
+@app.post("/schedule_event/alumni/{email}", response_model=Event)
+async def post_event(email, event: Event):
+    data = await schedule_event(email, event.dict())
+    if "error" in data.keys():
+        return HTTPException(405, f"Unable to schedule meet for alumni with email: {email}")
+    elif (data):
+        return data
+    return HTTPException(404, "Schedule Failed")
+    # return f"post event {event} to {email}"
 
 
 # @app.post("/alumni/{email}", response_model=Alumni)

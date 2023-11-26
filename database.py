@@ -40,6 +40,7 @@ async def fetch_events_history(email):
     data = await alumni_collection.find_one({"email": email})
     return data["event_history"]
 
+
 async def fetch_event_details(email, title):
     data = await alumni_collection.find_one({"email": email}, {"event_history": {"$elemMatch": {"title": title}}})
     return data['event_history'][0]
@@ -52,6 +53,7 @@ async def fetch_all_students(email):
         data.append(Student(**document))
     return data
 
+
 async def update_alumni_details(email, details):
     try:
         data = await alumni_collection.find_one({"email": email})
@@ -60,14 +62,17 @@ async def update_alumni_details(email, details):
                 alumni_collection.update_one(
                     {"email": email}, {"$set": {f"{key}": details[key]}})
         return details
-    except AttributeError:
+    except:
         return {"error": "invalid email id"}
 
 
-# async def schedule_event(email, event):
-#     alumni_collection.update_one(
-#         {"email": email}, {"$push": {"event_history": event}})
-#     return event
+async def schedule_event(email, event):
+    try:
+        alumni_collection.update_one(
+            {"email": email}, {"$push": {"event_history": event}})
+        return event
+    except:
+        return {"error": "some error occured"}
 
 
 # async def update_alumni_details(email, alumni):
