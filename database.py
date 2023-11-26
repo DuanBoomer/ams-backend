@@ -3,7 +3,8 @@ from model import Student
 import os
 # from model import Todo
 
-uri = os.getenv("MONGODB")
+# uri = os.getenv("MONGODB")
+uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
 client = motor.motor_asyncio.AsyncIOMotorClient(uri)
 database = client.alumni_mapping_system
 alumni_collection = database.alumni

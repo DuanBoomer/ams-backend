@@ -11,8 +11,9 @@ from database import (
     fetch_ongoing_event,
     fetch_event_details,
     fetch_all_students,
-    # schedule_event,
     update_alumni_details,
+    # schedule_event,
+    # update_alumni_details,
     # update_student_details
 )
 
@@ -99,8 +100,8 @@ async def get_event_details(email, title):
     return HTTPException(404, f"No event under alumni email: {email} with title: {title}")
 
 @app.post("/update/alumni/{email}", response_model = Alumni)
-async def update_alumni_details(email, details: Alumni):
-    data = await update_alumni_details(email, details)
+async def post_alumni_details(email, details: Alumni):
+    data = await update_alumni_details(email, details.dict())
     if "error" in data.keys():
         return HTTPException(405, f"Unable to update alumni with email: {email}")
     elif data:
