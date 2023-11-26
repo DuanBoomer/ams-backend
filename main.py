@@ -12,7 +12,7 @@ from database import (
     fetch_event_details,
     fetch_all_students,
     # schedule_event,
-    # update_alumni_details,
+    update_alumni_details,
     # update_student_details
 )
 
@@ -97,6 +97,15 @@ async def get_event_details(email, title):
     if (data):
         return data
     return HTTPException(404, f"No event under alumni email: {email} with title: {title}")
+
+@app.post("/update/alumni/{email}", response_model = Alumni)
+async def update_alumni_details(email, details: Alumni):
+    data = await update_alumni_details(email, details.dict())
+    if "error" in data.keys():
+        return HTTPException(405, f"Unable to update alumni with email: {email}")
+    elif data:
+        return data
+    return HTTPException(404, f"No alumni with email: {email} found")
 
 # Chat
 # @app.get("/socket.io")

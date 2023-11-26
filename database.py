@@ -51,6 +51,17 @@ async def fetch_all_students(email):
         data.append(Student(**document))
     return data
 
+async def update_alumni_details(email, details):
+    try:
+        data = await alumni_collection.find_one({"email": email})
+        for key in data.keys():
+            if key in details.keys() and data[key] != details[key]:
+                alumni_collection.update_one(
+                    {"email": email}, {"$set": {f"{key}": details[key]}})
+        return details
+    except AttributeError:
+        return {"error": "invalid email id"}
+
 
 # async def schedule_event(email, event):
 #     alumni_collection.update_one(

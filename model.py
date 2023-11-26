@@ -6,6 +6,7 @@ class Alumni(BaseModel):
     company: str
     expertise: list
     desc: str
+    image: str
 
 class Student(BaseModel):
     alumni: str
