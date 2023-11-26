@@ -2,21 +2,24 @@ from pydantic import BaseModel
 
 class Alumni(BaseModel):
     name: str
-    email: str
+    batch: str
+    contact_no: str
     company: str
-    expertise: list
+    position: str
+    email: str
     desc: str
     image: str
+    expertise: list
 
 class Student(BaseModel):
-    alumni: str
+    roll_no: str
     name: str
     email: str
+    stream: str
+    student_coordinator: str
+    alumni: str
     desc: str
     course: str
-    stream: str
-    year: str
-    rollno: str
 
 class Event(BaseModel):
     title: str

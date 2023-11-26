@@ -1,2 +1,4 @@
 envs
 __pycache__
+data.xlsx
+upload_data.py
