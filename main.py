@@ -100,7 +100,7 @@ async def get_event_details(email, title):
 
 @app.post("/update/alumni/{email}", response_model = Alumni)
 async def update_alumni_details(email, details: Alumni):
-    data = await update_alumni_details(email, details.dict())
+    data = await update_alumni_details(email, details)
     if "error" in data.keys():
         return HTTPException(405, f"Unable to update alumni with email: {email}")
     elif data:
