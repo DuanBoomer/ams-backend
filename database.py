@@ -1,5 +1,5 @@
 import motor.motor_asyncio
-from model import Student
+from model import (Student, Event)
 import os
 # from model import Todo
 
@@ -32,13 +32,29 @@ async def fetch_alumni(email):
 
 
 async def fetch_ongoing_event(email):
-    data = await alumni_collection.find_one({"email": email}, {"event_history": {"$elemMatch": {"type": "pending"}}})
-    return data['event_history'][0]
+    returnVal = []
+    data = await alumni_collection.find_one({"email": email})
+
+    for val in data['event_history']:
+        if val['type'] == 'pending':
+            returnVal.append(val)
+
+    return returnVal
 
 
 async def fetch_events_history(email):
+    returnVal = {
+        "pending": [],
+        "done": [],
+    }
     data = await alumni_collection.find_one({"email": email})
-    return data["event_history"]
+    for val in data['event_history']:
+        if val['type'] == 'pending':
+            returnVal["pending"].append(val)
+        else:
+            returnVal["done"].append(val)
+
+    return returnVal
 
 
 async def fetch_event_details(email, title):
