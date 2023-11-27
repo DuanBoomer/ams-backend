@@ -62,6 +62,25 @@ async def fetch_event_details(email, title):
     return data['event_history'][0]
 
 
+async def remove_event(email, title):
+    data = await alumni_collection.update_one({"email": email}, {"$pull": {"event_history": {"title": title}}})
+    print(data)
+    return {"success": True}
+
+async def update_event_details(email, title, details):
+    try:
+        data = await alumni_collection.find_one({"email": email})
+        data = data['event_history']
+        for i in range(len(data)):
+            if data[i]['title'] == title:
+                data[i] = details
+
+        alumni_collection.update_one({"email": email}, {"$set": {f"event_history": data}})
+        return details
+    except:
+        return {"error": "invalid email id"}
+
+
 async def fetch_all_students(email):
     data = []
     cursor = student_collection.find({"alumni": email})

@@ -10,6 +10,8 @@ from database import (
     fetch_events_history,
     fetch_ongoing_event,
     fetch_event_details,
+    remove_event,
+    update_event_details,
     fetch_all_students,
     update_alumni_details,
     schedule_event,
@@ -35,6 +37,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 async def home_route():
@@ -105,8 +108,16 @@ async def get_event_details(email, title):
     return HTTPException(404, f"No event under alumni email: {email} with title: {title}")
 
 
-@app.post("/update/alumni/{email}", response_model=Alumni)
-async def post_alumni_details(email, details: Alumni):
+@app.delete("/delete/events/{email}/{title}")
+async def delete_event(email, title):
+    data = await remove_event(email, title)
+    if (data):
+        return data
+    return HTTPException(404, f"No event under alumni email: {email}")
+
+
+@app.put("/update/alumni/{email}", response_model=Alumni)
+async def put_alumni_details(email, details: Alumni):
     data = await update_alumni_details(email, details.dict())
     if "error" in data.keys():
         return HTTPException(405, f"Unable to update alumni with email: {email}")
@@ -123,7 +134,13 @@ async def post_event(email, event: Event):
     elif (data):
         return data
     return HTTPException(404, "Schedule Failed")
-    # return f"post event {event} to {email}"
+
+@app.put("/update/event/{email}/{title}")
+async def put_event_details(email, title, details: Event):
+    data = await update_event_details(email, title, details.dict())
+    if (data):
+        return data
+    return HTTPException(404, f"some shit went really wrong")
 
 
 # @app.post("/alumni/{email}", response_model=Alumni)
