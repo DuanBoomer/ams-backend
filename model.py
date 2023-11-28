@@ -20,6 +20,7 @@ class Student(BaseModel):
     alumni: str
     desc: str
     course: str
+    image: str
 
 class Event(BaseModel):
     title: str
