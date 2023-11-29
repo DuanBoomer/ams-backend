@@ -1,9 +1,12 @@
 from pydantic import BaseModel
 
+class AuthData(BaseModel):
+    email: str
+    password: str
+
 class Alumni(BaseModel):
     name: str
     batch: str
-    contact_no: str
     company: str
     position: str
     email: str

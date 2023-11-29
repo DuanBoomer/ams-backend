@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
-
-from model import (Alumni, Event, Student)
-# import socketio
+import motor.motor_asyncio
+from model import (Alumni, Event, Student, AuthData)
 from database import (
     authenticate_alumni,
     authenticate_student,
@@ -18,18 +17,12 @@ from database import (
     # update_alumni_details,
     # update_student_details
 )
-
+import os
 from fastapi.middleware.cors import CORSMiddleware
+
+
 app = FastAPI()
-
-origins = [
-    "http://localhost:3000", "https://alumni-mapping-system.vercel.app"
-]
-
-# sio=socketio.AsyncServer(cors_allowed_origins=origins,async_mode='asgi')
-# socket_app = socketio.ASGIApp(sio)
-# app.mount("/", socket_app)
-
+origins = ["http://localhost:3000", "https://alumni-mapping-system.vercel.app"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -38,11 +31,116 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# uri = os.getenv("MONGODB")
+uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
+client = motor.motor_asyncio.AsyncIOMotorClient(uri)
+database = client.alumni_mapping_system
+alumni_collection = database.alumni
+student_collection = database.student
+
 
 @app.get("/")
 async def home_route():
     return {"application": "alumni-mapping-system"}
 
+
+@app.post("/auth")
+async def auth_user(post_data: AuthData):
+    '''
+    used for the login page \n
+    send the email and the password hash in the following format \n
+        email: string \n
+        password: string \n
+    if autherised you will recieve the following response \n
+        type: alumni or student \n
+        email: string \n
+        alumni: if type == student \n
+    else you will get the following response \n
+        null \n
+    '''
+    post_data = post_data.dict()
+    data = await alumni_collection.find_one({
+        "email": post_data["email"],
+        "password": post_data["password"]
+    })
+    if (data):
+        return {
+            "type": "alumni",
+            "email": data["email"]
+        }
+
+    data = await student_collection.find_one({
+        "email": post_data["email"],
+        "password": post_data["password"]
+    })
+    if (data):
+        return {
+            "type": "student",
+            "email": data["email"],
+            "alumni": data["alumni"]
+        }
+
+@app.get("/data/{email}")
+async def get_data(email):
+    '''
+    get some data about a user \n
+    the request should have a email in the url \n
+    if the email is of a student it will return \n
+        roll_no: str \n
+        name: str \n
+        email: str \n
+        stream: str \n
+        student_coordinator: str \n
+        alumni: str \n
+        desc: str \n
+        course: str \n
+        image: str \n
+    if the email is of a alumni it will return \n
+        name: str \n
+        batch: str \n
+        company: str \n
+        position: str \n
+        email: str \n
+        desc: str \n
+        image: str \n
+        expertise: list \n
+    '''
+    data = await alumni_collection.find_one({
+        "email": email
+    })
+    if (data):
+        return Alumni(**data)
+    
+    data = await student_collection.find_one({
+        "email": email
+    })
+    if (data):
+        return Student(**data)
+    
+@app.get("/data/students/{email}")
+async def students_data(email):
+    '''
+    get all the details of students under a alumni \n
+    the request should have a email in url \n
+    it will return a array with the following details \n
+        [
+            roll_no: str \n
+            name: str \n
+            email: str \n
+            stream: str \n
+            student_coordinator: str \n
+            alumni: str \n
+            desc: str \n
+            course: str \n
+            image: str \n
+        ]
+    '''
+    data = []
+    cursor = student_collection.find({"alumni": email})
+    if (cursor):
+        async for document in cursor:
+            data.append(Student(**document))
+        return data
 
 @app.get("/alumni/{email}/{password}", response_model=Alumni)
 async def auth_alumni(email, password):
@@ -134,6 +232,7 @@ async def post_event(email, event: Event):
     elif (data):
         return data
     return HTTPException(404, "Schedule Failed")
+
 
 @app.put("/update/event/{email}/{title}")
 async def put_event_details(email, title, details: Event):
