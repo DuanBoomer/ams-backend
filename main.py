@@ -1,22 +1,22 @@
 from fastapi import FastAPI, HTTPException
 import motor.motor_asyncio
 from model import (Alumni, Event, Student, AuthData)
-from database import (
-    authenticate_alumni,
-    authenticate_student,
-    fetch_student,
-    fetch_alumni,
-    fetch_events_history,
-    fetch_ongoing_event,
-    fetch_event_details,
-    remove_event,
-    update_event_details,
-    fetch_all_students,
-    update_alumni_details,
-    schedule_event,
+# from database import (
+    # authenticate_alumni,
+    # authenticate_student,
+    # fetch_student,
+    # fetch_alumni,
+    # fetch_events_history,
+    # fetch_ongoing_event,
+    # fetch_event_details,
+    # remove_event,
+    # update_event_details,
+    # fetch_all_students,
+    # update_alumni_details,
+    # schedule_event,
     # update_alumni_details,
     # update_student_details
-)
+# )
 import os
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -31,8 +31,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# uri = os.getenv("MONGODB")
-uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
+uri = os.getenv("MONGODB")
+# uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
 client = motor.motor_asyncio.AsyncIOMotorClient(uri)
 database = client.alumni_mapping_system
 alumni_collection = database.alumni
@@ -78,8 +78,7 @@ async def auth_user(post_data: AuthData):
             "type": "student",
             "email": data["email"],
             "alumni": data["alumni"]
-        }
-
+        } 
 @app.get("/data/{email}")
 async def get_data(email):
     '''
@@ -142,157 +141,168 @@ async def students_data(email):
             data.append(Student(**document))
         return data
 
-@app.get("/alumni/{email}/{password}", response_model=Alumni)
-async def auth_alumni(email, password):
-    data = await authenticate_alumni(email, password)
-    if (data):
-        return data
-    return HTTPException(404, f"Authentication failed for {email}")
+@app.get("/event/history/{email}")
+async def event_history(email):
+    '''
+    get all the events that have happended or are happening under a alumni  \n
+    it takes a alumni email in the url and returns the list of events as below \n
+        pending: [] \n
+        done: [] \n
+    each event is described by the following attributes \n
+        title: str \n
+        start_time: str \n
+        end_time: str \n
+        day: str \n
+        date: str \n
+        desc: str \n
+        link: str \n
+        type: str \n
+        docs: list \n
+    '''
+    data = {
+        "pending": [],
+        "done": [],
+    }
+    cursor = await alumni_collection.find_one({"email": email})
+    if cursor and cursor['event_history']:
+        for val in cursor['event_history']:
+            if val['type'] == 'pending':
+                data["pending"].append(val)
+            else:
+                data["done"].append(val)
+    return data
+
+@app.put("/update/student/{email}" )
+async def update_student(email, put_data: Student):
+    '''
+    change the student details in the database \n
+    the request should have the following parameters \n
+        desc: str \n
+        image: str \n
+        interest: str \n TODO
+    returns \n
+        success: true | false
+    '''
+    details = put_data.dict()
+    try:
+        data = await student_collection.find_one({"email": email})
+        for key in data.keys():
+            if key in details.keys() and data[key] != details[key]:
+                student_collection.update_one(
+                    {"email": email}, {"$set": {f"{key}": details[key]}})
+        return {"success": True}
+    except:
+        return {"success": False}
+
+@app.put("/update/alumni/{email}")
+async def update_alumni(email, put_data: Alumni):
+    '''
+    change the alumni details in the database \n
+    the request should have the following parameters \n
+        company: str \n
+        position: str \n
+        desc: str \n
+        image: str \n
+        expertise: list \n
+    returns \n
+        success: true | false \n
+    '''
+    details = put_data.dict()
+    try:
+        data = await alumni_collection.find_one({"email": email})
+        for key in data.keys():
+            if key in details.keys() and data[key] != details[key]:
+                alumni_collection.update_one(
+                    {"email": email}, {"$set": {f"{key}": details[key]}})
+        return {"success": True}
+    except:
+        return {"success": False}
 
 
-@app.get("/student/{email}/{password}", response_model=Student)
-async def auth_student(email, password):
-    data = await authenticate_student(email, password)
-    if (data):
-        return data
-    return HTTPException(404, f"Authentication failed for {email}")
-
-
-@app.get("/alumni/{email}", response_model=Alumni)
-async def get_alumni_details(email):
-    data = await fetch_alumni(email)
-    if (data):
-        return data
-    return HTTPException(404, f"No alumni with email: {email} exists")
-
-
-@app.get("/student/{email}", response_model=Student)
-async def get_student_details(email):
-    data = await fetch_student(email)
-    if (data):
-        return data
-    return HTTPException(404, f"No student with email: {email} exists")
-
-
-@app.get("/events/alumni/{email}")
-async def get_events_history(email):
-    data = await fetch_events_history(email)
-    if (data):
-        return data
-    return HTTPException(404, f"No events for alumni with email: {email}")
-
-
-@app.get("/students/alumni/{email}")
-async def get_students_under_alumni(email):
-    data = await fetch_all_students(email)
-    if (data):
-        return data
-    return HTTPException(404, f"No students under alumni with email: {email}")
-
-
-@app.get("/ongoing_event/alumni/{email}")
-async def get_ongoing_event(email):
-    data = await fetch_ongoing_event(email)
-    if (data):
-        return data
-    return HTTPException(404, f"No ongoing events for alumni with email: {email}")
-
-
-@app.get("/eventdetails/alumni/{email}/{title}")
-async def get_event_details(email, title):
-    data = await fetch_event_details(email, title)
-    if (data):
-        return data
-    return HTTPException(404, f"No event under alumni email: {email} with title: {title}")
-
-
-@app.delete("/delete/events/{email}/{title}")
-async def delete_event(email, title):
-    data = await remove_event(email, title)
-    if (data):
-        return data
-    return HTTPException(404, f"No event under alumni email: {email}")
-
-
-@app.put("/update/alumni/{email}", response_model=Alumni)
-async def put_alumni_details(email, details: Alumni):
-    data = await update_alumni_details(email, details.dict())
-    if "error" in data.keys():
-        return HTTPException(405, f"Unable to update alumni with email: {email}")
-    elif data:
-        return data
-    return HTTPException(404, f"No alumni with email: {email} found")
-
-
-@app.post("/schedule_event/alumni/{email}", response_model=Event)
-async def post_event(email, event: Event):
-    data = await schedule_event(email, event.dict())
-    if "error" in data.keys():
-        return HTTPException(405, f"Unable to schedule meet for alumni with email: {email}")
-    elif (data):
-        return data
-    return HTTPException(404, "Schedule Failed")
-
+@app.put("/reset/password/{email}")
+async def reset_password(email, password: str):
+    '''
+    TODO
+    reset the password of a user in the database
+    '''
+    pass
 
 @app.put("/update/event/{email}/{title}")
-async def put_event_details(email, title, details: Event):
-    data = await update_event_details(email, title, details.dict())
-    if (data):
-        return data
-    return HTTPException(404, f"some shit went really wrong")
+async def update_event(email, title, details: Event):
+    '''
+    change the event details without canceling the event \n
+    supply the email of the alumni and the title of the event in the url = \n
+    also give the new event details in the put request with the following parameters \n
+        title: str 
+        start_time: str
+        end_time: str
+        day: str 
+        date: str
+        desc: str
+        link: str
+        type: str
+        docs: list
+    if the event is updated you will get the following response \n
+        success: true
+    if the event is not updated you will get the following response \n
+        success: false
+    '''
+    details = details.dict()
+    try:
+        data = await alumni_collection.find_one({"email": email})
+        data = data['event_history']
+        for i in range(len(data)):
+            if data[i]['title'] == title:
+                data[i] = details
 
+        re = await alumni_collection.update_one({"email": email}, {"$set": {f"event_history": data}})
+        print(re)
+        return {"success": True}
+    except:
+        return {"success": False}
 
-# @app.post("/alumni/{email}", response_model=Alumni)
-# async def update_alumni(email, data: Alumni):
-#     # data = await update_alumni_details(email, data.dict())
-#     # if (data):
-#     #     return data
-#     # return HTTPException(404, "Updation failed for alumni {email}")
-#     return {"response": f"update alumni {email}"}
+@app.delete("/delete/event/{email}/{title}")
+async def delete_event(email, title):
+    '''
+    cancel a scheduled event \n
+    supply the email of the alumni under which the event is hosted and the title of the event in the url \n 
+    if the event is successfully deleted, you will recieve the following response \n
+        success: true \n
+    if it is not deleted, you will recieve the following response \n
+        success: false \n
+    '''
+    try:
+        data = await alumni_collection.update_one(
+            {"email": email}, 
+            {"$pull": {"event_history": {"title": title}}})
+        return {"success": True}
+    except:
+        return {"success": "False"}
 
-
-# @app.post("student/{email}", response_model=Student)
-# async def update_student(email, data: Student):
-#     # data = await update_student_details(email, data.dict())
-#     # if (data):
-#     #     return data
-#     # return HTTPException(404, "Updation failed for studet {email}")
-#     return {"response": f"update student {email}"}
-
-
-# @app.get("/")
-# async def read_root():
-#     return {"Hello": "World"}
-
-# @app.get("/api/todo")
-# async def get_todo():
-#     response = await fetch_all_todos()
-#     return response
-
-# @app.get("/api/todo/{title}", response_model=Todo)
-# async def get_todo_by_title(title):
-#     response = await fetch_one_todo(title)
-#     if response:
-#         return response
-#     raise HTTPException(404, f"There is no todo with the title {title}")
-
-# @app.post("/api/todo/", response_model=Todo)
-# async def post_todo(todo: Todo):
-#     response = await create_todo(todo.dict())
-#     if response:
-#         return response
-#     raise HTTPException(400, "Something went wrong")
-
-# @app.put("/api/todo/{title}/", response_model=Todo)
-# async def put_todo(title: str, desc: str):
-#     response = await update_todo(title, desc)
-#     if response:
-#         return response
-#     raise HTTPException(404, f"There is no todo with the title {title}")
-
-# @app.delete("/api/todo/{title}")
-# async def delete_todo(title):
-#     response = await remove_todo(title)
-#     if response:
-#         return "Successfully deleted todo"
-#     raise HTTPException(404, f"There is no todo with the title {title}")
+@app.post("/schedule/event/{email}")
+async def post_event(email, event: Event):
+    '''
+    schedule a event \n
+    supply the email of the alumni under which the event needs to be held in the url \n
+    also send the following details about the event in the post request \n
+        title: str \n
+        start_time: str \n
+        end_time: str \n
+        day: str \n
+        date: str \n
+        desc: str \n
+        link: str \n
+        type: str \n
+        docs: list \n
+    if the event is scheduled you will get the following response \n
+        success: true \n
+    if the event is not schedules you will get the following response \n
+        success: false \n
+    '''
+    event = event.dict()
+    try:
+        alumni_collection.update_one(
+            {"email": email}, {"$push": {"event_history": event}})
+        return {"success": True}
+    except:
+        return {"success": False}
