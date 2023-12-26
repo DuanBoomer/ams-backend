@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import motor.motor_asyncio
-from model import (Alumni, Event, Student, AuthData)
+from model import (Alumni, Event, Student, AuthData, Chat)
 # from database import (
 # authenticate_alumni,
 # authenticate_student,
@@ -31,8 +31,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-uri = os.getenv("MONGODB")
-# uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
+# uri = os.getenv("MONGODB")
+uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
 client = motor.motor_asyncio.AsyncIOMotorClient(uri)
 database = client.alumni_mapping_system
 alumni_collection = database.alumni
@@ -322,7 +322,9 @@ async def get_chat(alumni):
     '''
     get the intial chat done by a group under a alumni
     '''
-    data = await chat_collection.find_one({'alumni': alumni})
-    if (data):
-        return data
+    data = []
+    cursor = await chat_collection.find_one({'alumni': alumni})
+    for val in cursor["chat"]:
+        data.append(Chat(**val))
+    return data
 
