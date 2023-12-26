@@ -324,7 +324,8 @@ async def get_chat(alumni):
     '''
     data = []
     cursor = await chat_collection.find_one({'alumni': alumni})
-    for val in cursor["chat"]:
-        data.append(Chat(**val))
-    return data
+    if cursor:
+        for val in cursor["chat"]:
+            data.append(Chat(**val))
+        return data
 
