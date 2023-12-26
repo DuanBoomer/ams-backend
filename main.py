@@ -324,8 +324,14 @@ async def get_chat(alumni):
     '''
     data = []
     cursor = await chat_collection.find_one({'alumni': alumni})
-    if cursor:
-        for val in cursor["chat"]:
-            data.append(Chat(**val))
-        return data
+    chat = cursor["chat"]
+
+    counter = 0
+    length = len(chat) - 1
+
+    if(cursor):
+        while counter < 20 and counter < length:
+            data.append(Chat(**chat[length - counter]))
+            counter += 1
+        return data[::-1]
 
