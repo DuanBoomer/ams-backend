@@ -322,7 +322,7 @@ async def get_chat(alumni):
     '''
     get the intial chat done by a group under a alumni
     '''
-    data = await chat_collection.fetch({'alumni': alumni})
+    data = await chat_collection.find_one({'alumni': alumni})
     if (data):
         return data
 
