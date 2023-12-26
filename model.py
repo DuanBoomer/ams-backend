@@ -36,3 +36,7 @@ class Event(BaseModel):
     type: str
     docs: list
 
+class Chat(BaseModel):
+    text: str
+    sender: str
+

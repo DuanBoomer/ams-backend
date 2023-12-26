@@ -2,20 +2,20 @@ from fastapi import FastAPI, HTTPException
 import motor.motor_asyncio
 from model import (Alumni, Event, Student, AuthData)
 # from database import (
-    # authenticate_alumni,
-    # authenticate_student,
-    # fetch_student,
-    # fetch_alumni,
-    # fetch_events_history,
-    # fetch_ongoing_event,
-    # fetch_event_details,
-    # remove_event,
-    # update_event_details,
-    # fetch_all_students,
-    # update_alumni_details,
-    # schedule_event,
-    # update_alumni_details,
-    # update_student_details
+# authenticate_alumni,
+# authenticate_student,
+# fetch_student,
+# fetch_alumni,
+# fetch_events_history,
+# fetch_ongoing_event,
+# fetch_event_details,
+# remove_event,
+# update_event_details,
+# fetch_all_students,
+# update_alumni_details,
+# schedule_event,
+# update_alumni_details,
+# update_student_details
 # )
 import os
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,6 +37,7 @@ client = motor.motor_asyncio.AsyncIOMotorClient(uri)
 database = client.alumni_mapping_system
 alumni_collection = database.alumni
 student_collection = database.student
+chat_collection = database.chat
 
 
 @app.get("/")
@@ -49,14 +50,14 @@ async def auth_user(post_data: AuthData):
     '''
     used for the login page \n
     send the email and the password hash in the following format \n
-        email: string \n
-        password: string \n
+        email: string
+        password: string
     if autherised you will recieve the following response \n
-        type: alumni or student \n
-        email: string \n
-        alumni: if type == student \n
+        type: alumni or student
+        email: string
+        alumni: if type == student
     else you will get the following response \n
-        null \n
+        null
     '''
     post_data = post_data.dict()
     data = await alumni_collection.find_one({
@@ -78,44 +79,47 @@ async def auth_user(post_data: AuthData):
             "type": "student",
             "email": data["email"],
             "alumni": data["alumni"]
-        } 
+        }
+
+
 @app.get("/data/{email}")
 async def get_data(email):
     '''
     get some data about a user \n
     the request should have a email in the url \n
     if the email is of a student it will return \n
-        roll_no: str \n
-        name: str \n
-        email: str \n
-        stream: str \n
-        student_coordinator: str \n
-        alumni: str \n
-        desc: str \n
-        course: str \n
-        image: str \n
+        roll_no: str
+        name: str
+        email: str
+        stream: str
+        student_coordinator: str
+        alumni: str
+        desc: str
+        course: str
+        image: str
     if the email is of a alumni it will return \n
-        name: str \n
-        batch: str \n
-        company: str \n
-        position: str \n
-        email: str \n
-        desc: str \n
-        image: str \n
-        expertise: list \n
+        name: str
+        batch: str
+        company: str
+        position: str
+        email: str
+        desc: str
+        image: str
+        expertise: list
     '''
     data = await alumni_collection.find_one({
         "email": email
     })
     if (data):
         return Alumni(**data)
-    
+
     data = await student_collection.find_one({
         "email": email
     })
     if (data):
         return Student(**data)
-    
+
+
 @app.get("/data/students/{email}")
 async def students_data(email):
     '''
@@ -123,15 +127,15 @@ async def students_data(email):
     the request should have a email in url \n
     it will return a array with the following details \n
         [
-            roll_no: str \n
-            name: str \n
-            email: str \n
-            stream: str \n
-            student_coordinator: str \n
-            alumni: str \n
-            desc: str \n
-            course: str \n
-            image: str \n
+            roll_no: str
+            name: str
+            email: str
+            stream: str
+            student_coordinator: str
+            alumni: str
+            desc: str
+            course: str
+            image: str
         ]
     '''
     data = []
@@ -141,23 +145,24 @@ async def students_data(email):
             data.append(Student(**document))
         return data
 
+
 @app.get("/event/history/{email}")
 async def event_history(email):
     '''
     get all the events that have happended or are happening under a alumni  \n
     it takes a alumni email in the url and returns the list of events as below \n
-        pending: [] \n
-        done: [] \n
+        pending: []
+        done: []
     each event is described by the following attributes \n
-        title: str \n
-        start_time: str \n
-        end_time: str \n
-        day: str \n
-        date: str \n
-        desc: str \n
-        link: str \n
-        type: str \n
-        docs: list \n
+        title: str
+        start_time: str
+        end_time: str
+        day: str
+        date: str
+        desc: str
+        link: str
+        type: str
+        docs: list
     '''
     data = {
         "pending": [],
@@ -172,14 +177,15 @@ async def event_history(email):
                 data["done"].append(val)
     return data
 
-@app.put("/update/student/{email}" )
+
+@app.put("/update/student/{email}")
 async def update_student(email, put_data: Student):
     '''
     change the student details in the database \n
     the request should have the following parameters \n
-        desc: str \n
-        image: str \n
-        interest: str \n TODO
+        desc: str
+        image: str
+        interest: str TODO
     returns \n
         success: true | false
     '''
@@ -194,18 +200,19 @@ async def update_student(email, put_data: Student):
     except:
         return {"success": False}
 
+
 @app.put("/update/alumni/{email}")
 async def update_alumni(email, put_data: Alumni):
     '''
     change the alumni details in the database \n
     the request should have the following parameters \n
-        company: str \n
-        position: str \n
-        desc: str \n
-        image: str \n
-        expertise: list \n
+        company: str
+        position: str
+        desc: str
+        image: str
+        expertise: list
     returns \n
-        success: true | false \n
+        success: true | false
     '''
     details = put_data.dict()
     try:
@@ -226,6 +233,7 @@ async def reset_password(email, password: str):
     reset the password of a user in the database
     '''
     pass
+
 
 @app.put("/update/event/{email}/{title}")
 async def update_event(email, title, details: Event):
@@ -261,23 +269,25 @@ async def update_event(email, title, details: Event):
     except:
         return {"success": False}
 
+
 @app.delete("/delete/event/{email}/{title}")
 async def delete_event(email, title):
     '''
     cancel a scheduled event \n
     supply the email of the alumni under which the event is hosted and the title of the event in the url \n 
     if the event is successfully deleted, you will recieve the following response \n
-        success: true \n
+        success: true
     if it is not deleted, you will recieve the following response \n
-        success: false \n
+        success: false
     '''
     try:
         data = await alumni_collection.update_one(
-            {"email": email}, 
+            {"email": email},
             {"$pull": {"event_history": {"title": title}}})
         return {"success": True}
     except:
         return {"success": "False"}
+
 
 @app.post("/schedule/event/{email}")
 async def post_event(email, event: Event):
@@ -285,19 +295,19 @@ async def post_event(email, event: Event):
     schedule a event \n
     supply the email of the alumni under which the event needs to be held in the url \n
     also send the following details about the event in the post request \n
-        title: str \n
-        start_time: str \n
-        end_time: str \n
-        day: str \n
-        date: str \n
-        desc: str \n
-        link: str \n
-        type: str \n
-        docs: list \n
+        title: str
+        start_time: str
+        end_time: str
+        day: str
+        date: str
+        desc: str
+        link: str
+        type: str
+        docs: list
     if the event is scheduled you will get the following response \n
-        success: true \n
+        success: true
     if the event is not schedules you will get the following response \n
-        success: false \n
+        success: false
     '''
     event = event.dict()
     try:
@@ -306,3 +316,13 @@ async def post_event(email, event: Event):
         return {"success": True}
     except:
         return {"success": False}
+
+@app.get("/chat/{alumni}")
+async def get_chat(alumni):
+    '''
+    get the intial chat done by a group under a alumni
+    '''
+    data = await chat_collection.fetch({'alumni': alumni})
+    if (data):
+        return data
+
