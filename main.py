@@ -330,8 +330,11 @@ async def get_chat(alumni):
     length = len(chat) - 1
 
     if(cursor):
-        while counter < 20 and counter < length:
-            data.append(Chat(**chat[length - counter]))
-            counter += 1
-        return data[::-1]
+        for c in chat:
+            data.append(Chat(**c))
+        return data
+        # while counter < 20 and counter < length:
+        #     data.append(Chat(**chat[length - counter]))
+        #     counter += 1
+        # return data[::-1]
 
