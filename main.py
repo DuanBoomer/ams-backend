@@ -20,7 +20,7 @@ from model import (Alumni, Event, Student, AuthData, Chat)
 import os
 from fastapi.middleware.cors import CORSMiddleware
 import socketio
-DYNAMIC_API_URL = "https://ams-chat-api.onrender.com"
+DYNAMIC_API_URL = "https://ams-chat-api.onrender.com/"
 
 app = FastAPI()
 origins = ["http://localhost:3000", "https://alumni-mapping-system.vercel.app",
