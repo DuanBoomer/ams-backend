@@ -290,7 +290,7 @@ async def delete_event(email, title):
             {"$pull": {"event_history": {"title": title}}})
         with socketio.SimpleClient() as sio:
             sio.connect(f'{DYNAMIC_API_URL}')
-            sio.emit("event_updates")
+            sio.emit("event_updates", email)
         return {"success": True}
     except:
         return {"success": "False"}
@@ -322,7 +322,7 @@ async def post_event(email, event: Event):
             {"email": email}, {"$push": {"event_history": event}})
         with socketio.SimpleClient() as sio:
             sio.connect(f'{DYNAMIC_API_URL}')
-            sio.emit("event_updates")
+            sio.emit("event_updates", email)
         return {"success": True}
     except:
         return {"success": False}
