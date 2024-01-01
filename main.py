@@ -19,10 +19,12 @@ from model import (Alumni, Event, Student, AuthData, Chat)
 # )
 import os
 from fastapi.middleware.cors import CORSMiddleware
-
+import socketio
+DYNAMIC_API_URL = "https://ams-chat-api.onrender.com"
 
 app = FastAPI()
-origins = ["http://localhost:3000", "https://alumni-mapping-system.vercel.app"]
+origins = ["http://localhost:3000", "https://alumni-mapping-system.vercel.app",
+           "https://ams-chat-api.onrender.com"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -264,7 +266,9 @@ async def update_event(email, title, details: Event):
                 data[i] = details
 
         re = await alumni_collection.update_one({"email": email}, {"$set": {f"event_history": data}})
-        print(re)
+        with socketio.SimpleClient() as sio:
+            sio.connect(f'{DYNAMIC_API_URL}')
+            sio.emit("event_updates")
         return {"success": True}
     except:
         return {"success": False}
@@ -284,6 +288,9 @@ async def delete_event(email, title):
         data = await alumni_collection.update_one(
             {"email": email},
             {"$pull": {"event_history": {"title": title}}})
+        with socketio.SimpleClient() as sio:
+            sio.connect(f'{DYNAMIC_API_URL}')
+            sio.emit("event_updates")
         return {"success": True}
     except:
         return {"success": "False"}
@@ -313,9 +320,13 @@ async def post_event(email, event: Event):
     try:
         alumni_collection.update_one(
             {"email": email}, {"$push": {"event_history": event}})
+        with socketio.SimpleClient() as sio:
+            sio.connect(f'{DYNAMIC_API_URL}')
+            sio.emit("event_updates")
         return {"success": True}
     except:
         return {"success": False}
+
 
 @app.get("/chat/{alumni}")
 async def get_chat(alumni):
@@ -329,7 +340,7 @@ async def get_chat(alumni):
     counter = 0
     length = len(chat) - 1
 
-    if(cursor):
+    if (cursor):
         for c in chat:
             data.append(Chat(**c))
         return data
@@ -337,4 +348,3 @@ async def get_chat(alumni):
         #     data.append(Chat(**chat[length - counter]))
         #     counter += 1
         # return data[::-1]
-
