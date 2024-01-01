@@ -268,7 +268,7 @@ async def update_event(email, title, details: Event):
         re = await alumni_collection.update_one({"email": email}, {"$set": {f"event_history": data}})
         with socketio.SimpleClient() as sio:
             sio.connect(f'{DYNAMIC_API_URL}')
-            sio.emit("event_updates")
+            sio.emit("event_updates", email)
         return {"success": True}
     except:
         return {"success": False}
