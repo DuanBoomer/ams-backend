@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 import motor.motor_asyncio
 # import gridfs
 # import shutil
-from model import (Alumni, Event, Student, AuthData, Chat)
+from model import (Alumni, Event, Student, AuthData, Chat, PasswordData)
 # from database import (
 # authenticate_alumni,
 # authenticate_student,
@@ -245,7 +245,7 @@ async def update_alumni(email, put_data: Alumni):
 
 
 @app.put("/set/password/{email}")
-async def set_password(email, password: str, type: str):
+async def set_password(email, data:PasswordData):
     '''
     set the password of a user in the database \n
     the request url must contain the email and the request body must contain the password and the type of the user \n
@@ -253,6 +253,9 @@ async def set_password(email, password: str, type: str):
         success: true | false
     
     '''
+    type = data.type
+    password = data.password
+    
     if type == "alumni":
         try:
             await alumni_collection.update_one({"email": email}, {"$set": {"password": password}})
