@@ -196,7 +196,7 @@ async def event_history(email):
     return data
 
 
-@app.put("/update/student/{email}")``
+@app.put("/update/student/{email}")
 async def update_student(email, put_data: Student):
     '''
     change the student details in the database \n
