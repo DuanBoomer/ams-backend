@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class PasswordData(BaseModel):
     password: str
@@ -23,6 +24,8 @@ class Student(BaseModel):
     name: str
     email: str
     stream: str
+    student_coordinator: Optional[str] = None
+    alumni: Optional[str] = None
     desc: str
     course: str
     image: str
