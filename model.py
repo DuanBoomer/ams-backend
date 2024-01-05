@@ -23,8 +23,6 @@ class Student(BaseModel):
     name: str
     email: str
     stream: str
-    student_coordinator: str
-    alumni: str
     desc: str
     course: str
     image: str
