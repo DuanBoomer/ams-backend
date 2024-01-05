@@ -1,5 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 import motor.motor_asyncio
+# import gridfs
+# import shutil
 from model import (Alumni, Event, Student, AuthData, Chat)
 # from database import (
 # authenticate_alumni,
@@ -58,6 +60,7 @@ async def auth_user(post_data: AuthData):
         type: alumni or student
         email: string
         alumni: if type == student
+        login: "first time" if logging in for the first time
     else you will get the following response \n
         null
     '''
@@ -66,7 +69,13 @@ async def auth_user(post_data: AuthData):
         "email": post_data["email"],
         "password": post_data["password"]
     })
-    if (data):
+    if (data and post_data["password"] == ""):
+        return {
+            "type": "alumni",
+            "email": data["email"],
+            "login": "first time"
+        }
+    elif (data and post_data["password"] != ""):
         return {
             "type": "alumni",
             "email": data["email"]
@@ -76,7 +85,14 @@ async def auth_user(post_data: AuthData):
         "email": post_data["email"],
         "password": post_data["password"]
     })
-    if (data):
+    if (data and post_data["password"] == ""):
+        return {
+            "type": "student",
+            "email": data["email"],
+            "alumni": data["alumni"],
+            "login": "first time"
+        }
+    elif (data and post_data["password"] != ""):
         return {
             "type": "student",
             "email": data["email"],
@@ -180,7 +196,7 @@ async def event_history(email):
     return data
 
 
-@app.put("/update/student/{email}")
+@app.put("/update/student/{email}")``
 async def update_student(email, put_data: Student):
     '''
     change the student details in the database \n
@@ -228,13 +244,35 @@ async def update_alumni(email, put_data: Alumni):
         return {"success": False}
 
 
-@app.put("/reset/password/{email}")
-async def reset_password(email, password: str):
+@app.put("/set/password/{email}")
+async def set_password(email, password: str, type: str):
     '''
-    TODO
-    reset the password of a user in the database
+    set the password of a user in the database \n
+    the request url must contain the email and the request body must contain the password and the type of the user \n
+    returns \n
+        success: true | false
+    
     '''
-    pass
+    if type == "alumni":
+        try:
+            await alumni_collection.update_one({"email": email}, {"$set": {"password": password}})
+            return {
+                "success": True,
+            }
+        except:
+            return {
+                "success": False
+            }
+    if type == "student":
+        try:
+            await student_collection.update_one({"email": email}, {"$set": {"password": password}})
+            return {
+                "success": True,
+            }
+        except:
+            return {
+                "success": False
+            }
 
 
 @app.put("/update/event/{email}/{title}")
@@ -265,7 +303,7 @@ async def update_event(email, title, details: Event):
             if data[i]['title'] == title:
                 data[i] = details
 
-        re = await alumni_collection.update_one({"email": email}, {"$set": {f"event_history": data}})
+        re = await alumni_collection.update_one({"email": email}, {"$set": {"event_history": data}})
         with socketio.SimpleClient() as sio:
             sio.connect(f'{DYNAMIC_API_URL}')
             sio.emit("event_updates", email)
@@ -348,3 +386,17 @@ async def get_chat(alumni):
         #     data.append(Chat(**chat[length - counter]))
         #     counter += 1
         # return data[::-1]
+
+
+# @app.post("/upload/{email}")
+# async def upload_document(email, uploaded_file: UploadFile = File(...)):
+#     content = await uploaded_file.read()
+#     return content
+
+    # path = f"files/{uploaded_file.filename}"
+    # with open(path, 'w+b') as file:
+    #     shutil.copyfileobj(uploaded_file.file, file)
+
+    # with open(path, "rb") as file:
+    #     data = file.read()
+    # return data
