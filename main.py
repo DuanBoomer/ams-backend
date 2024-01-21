@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
-import motor.motor_asyncio
+# import motor.motor_asyncio
+from pymongo import MongoClient
+from pprint import pprint
 # import gridfs
 # import shutil
 from model import (Alumni, Event, Student, AuthData, Chat, PasswordData)
@@ -37,7 +39,8 @@ app.add_middleware(
 
 # uri = os.getenv("MONGODB")
 uri = "mongodb+srv://chirag1292003:12092003Duan@alumni-mapping-system-d.iryfq1v.mongodb.net/?retryWrites=true&w=majority"
-client = motor.motor_asyncio.AsyncIOMotorClient(uri)
+# client = motor.motor_asyncio.AsyncIOMotorClient(uri)
+client = MongoClient(uri)
 database = client.alumni_mapping_system
 alumni_collection = database.alumni
 student_collection = database.student
@@ -65,7 +68,7 @@ async def auth_user(post_data: AuthData):
         null
     '''
     post_data = post_data.dict()
-    data = await alumni_collection.find_one({
+    data = alumni_collection.find_one({
         "email": post_data["email"],
         "password": post_data["password"]
     })
@@ -81,7 +84,7 @@ async def auth_user(post_data: AuthData):
             "email": data["email"]
         }
 
-    data = await student_collection.find_one({
+    data = student_collection.find_one({
         "email": post_data["email"],
         "password": post_data["password"]
     })
@@ -125,13 +128,13 @@ async def get_data(email):
         image: str
         expertise: list
     '''
-    data = await alumni_collection.find_one({
+    data = alumni_collection.find_one({
         "email": email
     })
     if (data):
         return Alumni(**data)
 
-    data = await student_collection.find_one({
+    data = student_collection.find_one({
         "email": email
     })
     if (data):
@@ -186,7 +189,7 @@ async def event_history(email):
         "pending": [],
         "done": [],
     }
-    cursor = await alumni_collection.find_one({"email": email})
+    cursor = alumni_collection.find_one({"email": email})
     if cursor and cursor['event_history']:
         for val in cursor['event_history']:
             if val['type'] == 'pending':
@@ -209,7 +212,7 @@ async def update_student(email, put_data: Student):
     '''
     details = put_data.dict()
     try:
-        data = await student_collection.find_one({"email": email})
+        data = student_collection.find_one({"email": email})
         for key in data.keys():
             if key in details.keys() and data[key] != details[key]:
                 student_collection.update_one(
@@ -234,7 +237,7 @@ async def update_alumni(email, put_data: Alumni):
     '''
     details = put_data.dict()
     try:
-        data = await alumni_collection.find_one({"email": email})
+        data = alumni_collection.find_one({"email": email})
         for key in data.keys():
             if key in details.keys() and data[key] != details[key]:
                 alumni_collection.update_one(
@@ -245,20 +248,21 @@ async def update_alumni(email, put_data: Alumni):
 
 
 @app.put("/set/password/{email}")
-async def set_password(email, data:PasswordData):
+async def set_password(email, data: PasswordData):
     '''
     set the password of a user in the database \n
     the request url must contain the email and the request body must contain the password and the type of the user \n
     returns \n
         success: true | false
-    
+
     '''
     type = data.type
     password = data.password
-    
+
     if type == "alumni":
         try:
-            await alumni_collection.update_one({"email": email}, {"$set": {"password": password}})
+            alumni_collection.update_one(
+                {"email": email}, {"$set": {"password": password}})
             return {
                 "success": True,
             }
@@ -268,7 +272,8 @@ async def set_password(email, data:PasswordData):
             }
     if type == "student":
         try:
-            await student_collection.update_one({"email": email}, {"$set": {"password": password}})
+            student_collection.update_one(
+                {"email": email}, {"$set": {"password": password}})
             return {
                 "success": True,
             }
@@ -300,13 +305,14 @@ async def update_event(email, title, details: Event):
     '''
     details = details.dict()
     try:
-        data = await alumni_collection.find_one({"email": email})
+        data = alumni_collection.find_one({"email": email})
         data = data['event_history']
         for i in range(len(data)):
             if data[i]['title'] == title:
                 data[i] = details
 
-        re = await alumni_collection.update_one({"email": email}, {"$set": {"event_history": data}})
+        re = alumni_collection.update_one(
+            {"email": email}, {"$set": {"event_history": data}})
         with socketio.SimpleClient() as sio:
             sio.connect(f'{DYNAMIC_API_URL}')
             sio.emit("event_updates", email)
@@ -326,7 +332,7 @@ async def delete_event(email, title):
         success: false
     '''
     try:
-        data = await alumni_collection.update_one(
+        data = alumni_collection.update_one(
             {"email": email},
             {"$pull": {"event_history": {"title": title}}})
         with socketio.SimpleClient() as sio:
@@ -370,30 +376,43 @@ async def post_event(email, event: Event):
 
 
 @app.get("/chat/{alumni}")
-async def get_chat(alumni):
+async def get_chat(alumni, skip: int = 0, limit: int = 20):
     '''
     get the intial chat done by a group under a alumni
     '''
     data = []
-    cursor = await chat_collection.find_one({'alumni': alumni})
-    chat = cursor["chat"]
-
-    counter = 0
-    length = len(chat) - 1
-
-    if (cursor):
-        for c in chat:
-            data.append(Chat(**c))
+    cursor = chat_collection.aggregate([
+        {
+            "$match": {"alumni": alumni}
+        },
+        {
+            "$project":
+            {
+                "_id": 0,
+                "result":
+                {
+                    "$sortArray": {"input": "$chat", "sortBy": {"time": -1}},
+                }
+            },
+        },
+        {
+            "$project": {
+                "result": {
+                    "$slice": ["$result", skip, limit],
+                }
+            }
+        }
+    ])
+    if cursor:
+        for i in cursor:
+            for c in i['result']:
+                data.append(c)
         return data
-        # while counter < 20 and counter < length:
-        #     data.append(Chat(**chat[length - counter]))
-        #     counter += 1
-        # return data[::-1]
 
 
 # @app.post("/upload/{email}")
 # async def upload_document(email, uploaded_file: UploadFile = File(...)):
-#     content = await uploaded_file.read()
+#     content =   uploaded_file.read()
 #     return content
 
     # path = f"files/{uploaded_file.filename}"
