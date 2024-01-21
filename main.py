@@ -162,7 +162,7 @@ async def students_data(email):
     data = []
     cursor = student_collection.find({"alumni": email})
     if (cursor):
-        async for document in cursor:
+        for document in cursor:
             data.append(Student(**document))
         return data
 
