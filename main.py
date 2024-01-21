@@ -391,7 +391,7 @@ async def get_chat(alumni, skip: int = 0, limit: int = 20):
                 "_id": 0,
                 "result":
                 {
-                    "$sortArray": {"input": "$chat", "sortBy": {"time": 1}},
+                    "$sortArray": {"input": "$chat", "sortBy": {"time": -1}},
                 }
             },
         },
@@ -407,7 +407,7 @@ async def get_chat(alumni, skip: int = 0, limit: int = 20):
         for i in cursor:
             for c in i['result']:
                 data.append(c)
-        return data
+        return data[::-1]
 
 
 # @app.post("/upload/{email}")
