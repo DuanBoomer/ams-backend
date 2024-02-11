@@ -39,6 +39,7 @@ class Event(BaseModel):
     desc: str
     link: str
     type: str
+    talking_points: str
     docs: list
 
 class Chat(BaseModel):

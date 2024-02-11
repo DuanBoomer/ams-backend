@@ -295,6 +295,7 @@ async def update_event(email, title, details: Event):
         day: str 
         date: str
         desc: str
+        talking_points: str
         link: str
         type: str
         docs: list
@@ -356,6 +357,7 @@ async def post_event(email, event: Event):
         date: str
         desc: str
         link: str
+        talking_points: str
         type: str
         docs: list
     if the event is scheduled you will get the following response \n
