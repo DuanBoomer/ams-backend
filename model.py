@@ -3,7 +3,7 @@ from typing import Optional, List
 
 
 class ReviewData(BaseModel):
-    name: str
+    email: str
     review: str
 
 
