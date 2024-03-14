@@ -1,13 +1,25 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+
+
+class ReviewData(BaseModel):
+    name: str
+    review: str
+
+
+class ReviewList(BaseModel):
+    data: List[ReviewData]
+
 
 class PasswordData(BaseModel):
     password: str
     type: str
 
+
 class AuthData(BaseModel):
     email: str
     password: str
+
 
 class Alumni(BaseModel):
     name: str
@@ -19,6 +31,7 @@ class Alumni(BaseModel):
     image: str
     expertise: list
 
+
 class Student(BaseModel):
     roll_no: str
     name: str
@@ -29,6 +42,7 @@ class Student(BaseModel):
     desc: str
     course: str
     image: str
+
 
 class Event(BaseModel):
     title: str
@@ -42,7 +56,7 @@ class Event(BaseModel):
     talking_points: str
     docs: list
 
+
 class Chat(BaseModel):
     text: str
     sender: str
-

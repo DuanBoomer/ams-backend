@@ -4,7 +4,8 @@ from pymongo import MongoClient
 from pprint import pprint
 # import gridfs
 # import shutil
-from model import (Alumni, Event, Student, AuthData, Chat, PasswordData)
+from model import (Alumni, Event, Student, AuthData,
+                   Chat, PasswordData, ReviewList)
 # from database import (
 # authenticate_alumni,
 # authenticate_student,
@@ -369,6 +370,35 @@ async def post_event(email, event: Event):
     try:
         alumni_collection.update_one(
             {"email": email}, {"$push": {"event_history": event}})
+        with socketio.SimpleClient() as sio:
+            sio.connect(f'{DYNAMIC_API_URL}')
+            sio.emit("event_updates", email)
+        return {"success": True}
+    except:
+        return {"success": False}
+
+
+@app.post("/review/students/{email}")
+async def review_students(email, event: Event, reviews: ReviewList):
+    '''
+    review the students after the alumni is done with the event \n
+    the data must be recieved in the following format \n
+        student_name(str): review(str)
+    if the review is successfully stored you will get the following response \n
+        success: true
+    else you will get the following response \n
+        success: false
+    '''
+    event = event.dict()
+    reviews = reviews.dict()
+    try:
+        data = alumni_collection.find_one({"email": email})
+        data = data['event_history']
+        for i in range(len(data)):
+            if data[i]['title'] == event['title'] and data[i]['date'] == event['date']:
+                data[i]['reviews'] = reviews['data']
+        re = alumni_collection.update_one(
+            {"email": email}, {"$set": {"event_history": data}})
         with socketio.SimpleClient() as sio:
             sio.connect(f'{DYNAMIC_API_URL}')
             sio.emit("event_updates", email)
