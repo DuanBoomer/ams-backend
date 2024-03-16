@@ -420,7 +420,7 @@ async def post_bug_report(email, report: BugReport):
     '''
     message = report.model_dump()['message']
     try:
-        bugs_collection.insert_one({email: email, message: message})
+        bugs_collection.insert_one({"email": email, "message": message})
         return {"success": True}
     except:
         return {"success": False}
