@@ -1,11 +1,10 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 # import motor.motor_asyncio
 from pymongo import MongoClient
-from pprint import pprint
 # import gridfs
 # import shutil
 from model import (Alumni, Event, Student, AuthData,
-                   Chat, PasswordData, ReviewList)
+                   Chat, PasswordData, ReviewList, BugReport)
 # from database import (
 # authenticate_alumni,
 # authenticate_student,
@@ -45,6 +44,7 @@ client = MongoClient(uri)
 database = client.alumni_mapping_system
 alumni_collection = database.alumni
 student_collection = database.student
+bugs_collection = database.bugs
 chat_collection = database.chat
 
 
@@ -68,7 +68,7 @@ async def auth_user(post_data: AuthData):
     else you will get the following response \n
         null
     '''
-    post_data = post_data.dict()
+    post_data = post_data.model_dump()
     data = alumni_collection.find_one({
         "email": post_data["email"],
         "password": post_data["password"]
@@ -211,7 +211,7 @@ async def update_student(email, put_data: Student):
     returns \n
         success: true | false
     '''
-    details = put_data.dict()
+    details = put_data.model_dump()
     try:
         data = student_collection.find_one({"email": email})
         for key in data.keys():
@@ -236,7 +236,7 @@ async def update_alumni(email, put_data: Alumni):
     returns \n
         success: true | false
     '''
-    details = put_data.dict()
+    details = put_data.model_dump()
     try:
         data = alumni_collection.find_one({"email": email})
         for key in data.keys():
@@ -305,7 +305,7 @@ async def update_event(email, title, details: Event):
     if the event is not updated you will get the following response \n
         success: false
     '''
-    details = details.dict()
+    details = details.model_dump()
     try:
         data = alumni_collection.find_one({"email": email})
         data = data['event_history']
@@ -366,7 +366,7 @@ async def post_event(email, event: Event):
     if the event is not schedules you will get the following response \n
         success: false
     '''
-    event = event.dict()
+    event = event.model_dump()
     try:
         alumni_collection.update_one(
             {"email": email}, {"$push": {"event_history": event}})
@@ -389,8 +389,8 @@ async def review_students(email, event: Event, reviews: ReviewList):
     else you will get the following response \n
         success: false
     '''
-    event = event.dict()
-    reviews = reviews.dict()
+    event = event.model_dump()
+    reviews = reviews.model_dump()
     try:
         data = alumni_collection.find_one({"email": email})
         data = data['event_history']
@@ -402,6 +402,25 @@ async def review_students(email, event: Event, reviews: ReviewList):
         with socketio.SimpleClient() as sio:
             sio.connect(f'{DYNAMIC_API_URL}')
             sio.emit("event_updates", email)
+        return {"success": True}
+    except:
+        return {"success": False}
+
+
+@app.post("/bugreport/{email}")
+async def post_bug_report(email, report: BugReport):
+    '''
+    file a bug report for ams, the format of the bug report is as following \n
+        email: str
+        message: str
+    if the report is filed sucessfully
+        success: true
+    else
+        sucess: false
+    '''
+    message = report.model_dump().message
+    try:
+        bugs_collection.insert_one({email: email, message: message})
         return {"success": True}
     except:
         return {"success": False}

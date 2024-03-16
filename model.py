@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
+class BugReport(BaseModel):
+    message: str
+    
 
 class ReviewData(BaseModel):
     email: str
@@ -55,6 +58,7 @@ class Event(BaseModel):
     type: str
     talking_points: str
     docs: list
+    reviews: Optional[list] = None
 
 
 class Chat(BaseModel):
